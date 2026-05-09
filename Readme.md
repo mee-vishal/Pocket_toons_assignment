@@ -352,12 +352,4 @@ These boundary cases are where adding more labeled examples and a confusion matr
 
 ---
 
-## Notes
 
-- The Groq API key in the original notebook should be rotated before sharing — never commit live API keys to version control
-- Synthetic data generation was done with an LLM and spot-checked for realism; it is not a substitute for real ticket data in production
-- The `priority` column escalation rule is conditional and only activates if that column exists in the input CSV
-
----
-
-*Built as a solution to the Support Triage Agent challenge. Questions or feedback? Open an issue.*
