@@ -156,7 +156,6 @@ Return ONLY JSON:
 # =========================================================
 # ESCALATION FUNCTION
 # =========================================================
-
 def should_escalate(ticket_text, confidence):
 
     escalation_keywords = [
@@ -173,24 +172,25 @@ def should_escalate(ticket_text, confidence):
 
         "gdpr",
 
-        "delete my account",
+        "stolen",
 
-        "refund immediately"
+        "charged multiple times"
 
     ]
 
     text = ticket_text.lower()
 
+    # keyword escalation
     for kw in escalation_keywords:
 
         if kw in text:
             return True
 
-    if confidence < 0.75:
+    # only VERY uncertain predictions
+    if confidence < 0.35:
         return True
 
     return False
-
 
 # =========================================================
 # USER INPUT
