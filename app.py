@@ -3,11 +3,11 @@
 # =========================================================
 
 import streamlit as st
-import google.generativeai as genai
 import json
 import os
 
 from dotenv import load_dotenv
+from groq import Groq
 
 
 # =========================================================
@@ -18,20 +18,14 @@ load_dotenv()
 
 
 # =========================================================
-# GEMINI CONFIG
+# GROQ CONFIG
 # =========================================================
 
-genai.configure(
+client = Groq(
 
     api_key=os.getenv(
-        "GEMINI_API_KEY"
+        "GROQ_API_KEY"
     )
-
-)
-
-model = genai.GenerativeModel(
-
-    "gemini-1.5-flash"
 
 )
 
@@ -67,7 +61,7 @@ and reply generation.
 
 
 # =========================================================
-# SINGLE AI ANALYSIS FUNCTION
+# AI ANALYSIS FUNCTION
 # =========================================================
 
 def analyze_ticket(ticket_text):
@@ -79,15 +73,15 @@ Tasks:
 1. classify category
 2. estimate confidence
 3. explain reasoning briefly
-4. generate short reply
+4. generate short support reply
 
 Categories:
-- billing_refund
-- content_access
-- technical_bug
-- account_management
-- subscription_plan
-- general_feedback
+- billing_refund → payments, refunds, charges, billing issues
+- content_access → missing episodes, playback access
+- technical_bug → crashes, app issues, loading bugs
+- account_management → password, account, login
+- subscription_plan → pricing, upgrades, plans
+- general_feedback → suggestions, compliments, complaints
 
 Reply rules:
 - under 50 words
@@ -99,8 +93,9 @@ Reply rules:
 Ticket:
 "{ticket_text}"
 
-Return ONLY JSON:
+Return ONLY valid JSON.
 
+Format:
 {{
   "category": "...",
   "confidence": 0.95,
@@ -111,29 +106,54 @@ Return ONLY JSON:
 
     try:
 
-        response = model.generate_content(
+        response = client.chat.completions.create(
 
-            prompt,
+            messages=[
 
-            request_options={
-                "timeout": 15
-            }
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+
+            ],
+
+            model="llama-3.3-70b-versatile",
+
+            temperature=0.2,
+
+            max_tokens=120
 
         )
 
-        raw_text = response.text.strip()
+        raw_text = (
 
+            response
+            .choices[0]
+            .message
+            .content
+            .strip()
+
+        )
+
+        # Remove markdown wrappers
         raw_text = raw_text.replace(
             "```json",
             ""
         ).replace(
             "```",
             ""
-        )
+        ).strip()
 
-        return json.loads(raw_text)
+        # Extract JSON safely
+        start = raw_text.find("{")
 
-    except Exception:
+        end = raw_text.rfind("}") + 1
+
+        json_text = raw_text[start:end]
+
+        return json.loads(json_text)
+
+    except Exception as e:
 
         return {
 
@@ -141,9 +161,7 @@ Return ONLY JSON:
 
             "confidence": 0.50,
 
-            "reasoning": (
-                "Model response parsing failed"
-            ),
+            "reasoning": f"Parsing/API failure: {str(e)}",
 
             "reply": (
                 "A support agent will "
@@ -156,6 +174,7 @@ Return ONLY JSON:
 # =========================================================
 # ESCALATION FUNCTION
 # =========================================================
+
 def should_escalate(ticket_text, confidence):
 
     escalation_keywords = [
@@ -180,17 +199,18 @@ def should_escalate(ticket_text, confidence):
 
     text = ticket_text.lower()
 
-    # keyword escalation
+    # Keyword-based escalation
     for kw in escalation_keywords:
 
         if kw in text:
             return True
 
-    # only VERY uncertain predictions
+    # Very low confidence only
     if confidence < 0.35:
         return True
 
     return False
+
 
 # =========================================================
 # USER INPUT
@@ -229,7 +249,7 @@ if st.button("Analyze Ticket"):
         ):
 
             # =====================================
-            # SINGLE AI CALL
+            # AI ANALYSIS
             # =====================================
 
             result = analyze_ticket(
@@ -238,7 +258,9 @@ if st.button("Analyze Ticket"):
 
             category = result["category"]
 
-            confidence = result["confidence"]
+            confidence = float(
+                result["confidence"]
+            )
 
             reasoning = result["reasoning"]
 
@@ -279,7 +301,7 @@ if st.button("Analyze Ticket"):
         st.subheader("Confidence")
 
         st.progress(
-            min(float(confidence), 1.0)
+            min(confidence, 1.0)
         )
 
         st.write(
