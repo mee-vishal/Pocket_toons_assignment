@@ -60,7 +60,7 @@ This project is a solution to the **Support Triage Agent** challenge. The goal w
 ```
 pockettoons-triage/
 │
-├── Copy_of_Untitled3.ipynb      # Main notebook — full pipeline
+├── support_triage_agent.ipynb     # Main notebook — full pipeline
 ├── run_eval.py                  # Standalone eval harness (20 labeled examples)
 │
 ├── pockettoons_support_tickets.csv   # Input: ~200 synthetic support tickets
@@ -75,7 +75,7 @@ pockettoons-triage/
 
 ### 1. Clone / open the notebook
 
-Open `Copy_of_Untitled3.ipynb` in Google Colab or Jupyter.
+Open `support_triage_agent.ipynb` in Google Colab or Jupyter.
 
 ### 2. Install dependencies
 
@@ -98,7 +98,7 @@ Get a free key at [console.groq.com](https://console.groq.com).
 Upload `pockettoons_support_tickets.csv` to your Colab session or update the path:
 
 ```python
-df = pd.read_csv("/content/pockettoons_support_tickets.csv")
+df = pd.read_csv("pockettoons_support_tickets.csv")
 ```
 
 ---
