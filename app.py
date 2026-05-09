@@ -35,6 +35,7 @@ model = genai.GenerativeModel(
 
 )
 
+
 # =========================================================
 # PAGE CONFIG
 # =========================================================
@@ -66,18 +67,23 @@ and reply generation.
 
 
 # =========================================================
-# CLASSIFICATION FUNCTION
+# SINGLE AI ANALYSIS FUNCTION
 # =========================================================
 
-def classify_ticket(ticket_text):
+def analyze_ticket(ticket_text):
 
     prompt = f"""
-You are a support ticket classifier
+You are an AI customer support assistant
 for PocketToons.
 
-Classify the ticket into EXACTLY ONE category.
+Your tasks:
 
-Categories:
+1. Classify the support ticket
+2. Estimate confidence score
+3. Explain reasoning briefly
+4. Generate a short support reply
+
+AVAILABLE CATEGORIES:
 - billing_refund
 - content_access
 - technical_bug
@@ -85,16 +91,27 @@ Categories:
 - subscription_plan
 - general_feedback
 
-Ticket:
+SUPPORT REPLY RULES:
+- Human and natural
+- Under 60 words
+- Mention one next step
+- Professional tone
+- Avoid robotic phrasing
+- Do NOT promise refunds
+- Do NOT invent policies
+- Do NOT hallucinate outcomes
+
+TICKET:
 "{ticket_text}"
 
 Return ONLY valid JSON.
 
-Format:
+FORMAT:
 {{
   "category": "billing_refund",
   "confidence": 0.95,
-  "reasoning": "short explanation"
+  "reasoning": "short explanation",
+  "reply": "support reply text"
 }}
 """
 
@@ -155,47 +172,6 @@ def should_escalate(ticket_text, confidence):
 
 
 # =========================================================
-# REPLY GENERATION
-# =========================================================
-
-def generate_reply(ticket_text, category):
-
-    prompt = f"""
-ROLE:
-You are a real customer support agent for PocketToons.
-
-TASK:
-Write a concise support reply.
-
-STYLE RULES:
-- Human and natural
-- Under 60 words
-- Mention one next step
-- Professional tone
-- Avoid robotic phrasing
-
-DO NOT:
-- promise refunds
-- invent policies
-- hallucinate outcomes
-
-Category:
-{category}
-
-Ticket:
-"{ticket_text}"
-
-Return ONLY the reply text.
-"""
-
-    response = model.generate_content(
-        prompt
-    )
-
-    return response.text.strip()
-
-
-# =========================================================
 # USER INPUT
 # =========================================================
 
@@ -232,10 +208,10 @@ if st.button("Analyze Ticket"):
         ):
 
             # =====================================
-            # CLASSIFICATION
+            # SINGLE AI CALL
             # =====================================
 
-            result = classify_ticket(
+            result = analyze_ticket(
                 ticket_input
             )
 
@@ -244,6 +220,8 @@ if st.button("Analyze Ticket"):
             confidence = result["confidence"]
 
             reasoning = result["reasoning"]
+
+            reply = result["reply"]
 
             # =====================================
             # ESCALATION
@@ -257,21 +235,7 @@ if st.button("Analyze Ticket"):
 
             )
 
-            # =====================================
-            # REPLY GENERATION
-            # =====================================
-
-            if not escalate:
-
-                reply = generate_reply(
-
-                    ticket_input,
-
-                    category
-
-                )
-
-            else:
+            if escalate:
 
                 reply = (
                     "Escalated to human support agent."
