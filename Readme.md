@@ -61,12 +61,11 @@ This project is a solution to the **Support Triage Agent** challenge. The goal w
 pockettoons-triage/
 │
 ├── support_triage_agent.ipynb     # Main notebook — full pipeline
-├── run_eval.py                  # Standalone eval harness (20 labeled examples)
 │
 ├── pockettoons_support_tickets.csv   # Input: ~200 synthetic support tickets
 ├── pockettoons_output.csv            # Output: predictions + replies + flags
 ├── pockettoons_output.json           # Output: same, in JSON format
-└── eval_results.csv                  # Output: eval run results
+
 ```
 
 ---
@@ -317,17 +316,6 @@ This is remarkably cheap. The dominant cost is infrastructure, not the LLM. At t
 
 ---
 
-## Bonus: Eval Set & Metrics
-
-A 20-example hand-labeled eval set is included in `run_eval.py`. It covers all 6 categories (4 billing, 4 content_access, 3 technical_bug, 3 account_management, 3 subscription_plan, 3 general_feedback) with 6 true escalations.
-
-### How to run the eval
-
-```bash
-pip install groq pandas scikit-learn tqdm
-# Add your API key to line 7 of run_eval.py
-python run_eval.py
-```
 
 ### Sample results (mock baseline)
 
