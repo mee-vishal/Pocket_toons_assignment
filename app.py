@@ -31,7 +31,7 @@ genai.configure(
 
 model = genai.GenerativeModel(
 
-    "gemini-2.5-flash-lite"
+    "gemini-1.5-flash"
 
 )
 
@@ -73,17 +73,15 @@ and reply generation.
 def analyze_ticket(ticket_text):
 
     prompt = f"""
-You are an AI customer support assistant
-for PocketToons.
+Analyze this PocketToons support ticket.
 
-Your tasks:
+Tasks:
+1. classify category
+2. estimate confidence
+3. explain reasoning briefly
+4. generate short reply
 
-1. Classify the support ticket
-2. Estimate confidence score
-3. Explain reasoning briefly
-4. Generate a short support reply
-
-AVAILABLE CATEGORIES:
+Categories:
 - billing_refund
 - content_access
 - technical_bug
@@ -91,45 +89,68 @@ AVAILABLE CATEGORIES:
 - subscription_plan
 - general_feedback
 
-SUPPORT REPLY RULES:
-- Human and natural
-- Under 60 words
-- Mention one next step
-- Professional tone
-- Avoid robotic phrasing
-- Do NOT promise refunds
-- Do NOT invent policies
-- Do NOT hallucinate outcomes
+Reply rules:
+- under 50 words
+- human sounding
+- mention next step
+- no refund promises
+- no fake timelines
 
-TICKET:
+Ticket:
 "{ticket_text}"
 
-Return ONLY valid JSON.
+Return ONLY JSON:
 
-FORMAT:
 {{
-  "category": "billing_refund",
+  "category": "...",
   "confidence": 0.95,
-  "reasoning": "short explanation",
-  "reply": "support reply text"
+  "reasoning": "...",
+  "reply": "..."
 }}
 """
 
-    response = model.generate_content(
-        prompt
-    )
+    try:
 
-    raw_text = response.text.strip()
+        response = model.generate_content(
 
-    raw_text = raw_text.replace(
-        "```json",
-        ""
-    ).replace(
-        "```",
-        ""
-    )
+            prompt,
 
-    return json.loads(raw_text)
+            request_options={
+                "timeout": 15
+            }
+
+        )
+
+        raw_text = response.text.strip()
+
+        raw_text = raw_text.replace(
+            "```json",
+            ""
+        ).replace(
+            "```",
+            ""
+        )
+
+        return json.loads(raw_text)
+
+    except Exception:
+
+        return {
+
+            "category": "technical_bug",
+
+            "confidence": 0.50,
+
+            "reasoning": (
+                "Model response parsing failed"
+            ),
+
+            "reply": (
+                "A support agent will "
+                "review this request shortly."
+            )
+
+        }
 
 
 # =========================================================
